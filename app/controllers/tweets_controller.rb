@@ -1,65 +1,47 @@
 class TweetsController < ApplicationController
-  
-    def create
-        token = cookies.permanent.signed[:twitter_session_token]
-        session = Session.find_by(token: token)
-        @user = session.user
+  def create
+    token = cookies.permanent.signed[:twitter_session_token]
+    session = Session.find_by(token: token)
+    @user = session.user
 
-        if @user
-            @tweet = Tweet.create(
-            message: 'Test Message'
-        )
-            render 'tweets/create'
-        else
-            render json: { error: 'Invalid session' }, status: :unauthorized
-        end
+    if @user
+      @tweet = @user.tweets.create!(
+        message: 'Test Message'
+      )
+      render 'tweets/create'
+    else
+      render json: { error: 'Invalid session' }, status: :unauthorized
     end
+  end
 
-    def index
-        token = cookies.permanent.signed[:twitter_session_token]
-        session = Session.find_by(token: token)
-    
-        @tweets = Tweet.all.order("id DESC")
+  def index
+    @tweets = Tweet.all.order('id DESC')
 
-        render 'tweets/index'
-    
-   
+    render 'tweets/index'
+  end
 
-    end
+  def destroy
+    token = cookies.permanent.signed[:twitter_session_token]
+    session = Session.find_by(token: token)
 
-    def destroy
-        token = cookies.permanent.signed[:twitter_session_token]
-        session = Session.find_by(token: token)
+    return render json: { success: false } unless session
 
-        return render json: { success: false } unless session
-        
-        user = session.user
+    user = session.user
+    tweet = user.tweets.find_by(id: params[:id])
 
-        tweet = user.tweets.find_by(id: params[:id])
+    return render json: { success: false } unless tweet
 
-            if tweet and (tweet.user == user) and tweet.destroy   
+    tweet.destroy
+    render json: { success: true }
+  end
 
-                render json: { success: true }
-            else
+  def index_by_user
+    user = User.find_by(username: params[:username])
 
-                render json: { success: false }
+    return render json: { success: false } unless user
 
-            end
-    end
+    @tweets = user.tweets
 
-    def index_by_user
-        token = cookies.permanent.signed[:twitter_session_token]
-        session = Session.find_by(token: token)
-
-        user = User.find_by(username: params[:username])
-
-        if user
-            @tweets = user.tweets
-            
-            render 'tweets/index_by_user'
-        end
-        
-    end
-
-
+    render 'tweets/index_by_user'
+  end
 end
