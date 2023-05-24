@@ -30,12 +30,14 @@ class TweetsController < ApplicationController
     def destroy
         token = cookies.permanent.signed[:twitter_session_token]
         session = Session.find_by(token: token)
+
+        return render json: { success: false } unless session
         
-        user = session&.user
+        user = session.user
 
-        @tweet = user&.tweets&.find_by(id: params[:id])
+        tweet = user.tweets.find_by(id: params[:id])
 
-            if @tweet and @tweet.destroy   
+            if tweet and (tweet.user == user) and tweet.destroy   
 
                 render json: { success: true }
             else
