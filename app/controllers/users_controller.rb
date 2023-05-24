@@ -7,6 +7,6 @@ class UsersController < ApplicationController
             password: 'asdasdasd'
         )
 
-        render 'users/create.jbuilder'
+        render 'users/create'
     end
 end
